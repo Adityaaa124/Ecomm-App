@@ -21,22 +21,20 @@ COPY . .
 RUN npm run build
 
 # Stage 2 : Production Stage
-FROM node:20-alpine AS production
+
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
-# copy package file
+# copy package files (for metadata)
 COPY package*.json ./
 
-# install dependencies
-RUN npm install --only:production
+# copy installed deps from builder to avoid reinstalling dev deps
+COPY --from=builder /app/node_modules ./node_modules
 
-# copy the built from the builder stage
+# copy the built application and prisma schema from the builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-
-# generate prisma client
-RUN npx prisma generate
 
 # expose port
 EXPOSE 3001
